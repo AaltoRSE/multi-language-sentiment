@@ -40,6 +40,7 @@ messages = [
     "Harmillinen juttu",
     "Detta är inte bra",
     "Jag skall gå till supermarket",
+    ""
 ]
 
 
@@ -65,31 +66,64 @@ def process_messages_in_batches(messages_with_languages, models = None):
     else:
         models = default_models.copy().update(models)
 
+    results = {}
+
     # Group messages by model, preserving original order
+    # if language is no detected, add None to results
     messages_by_model = defaultdict(list)
     for index, (message, language) in enumerate(messages_with_languages):
         model_name = models.get(language)
         if model_name:
             messages_by_model[model_name].append((index, message))
-
+        else:
+            results[index] = {"label": "none", "score": 0}
+            
     # Process messages and maintain original order
-    results = OrderedDict()
     for model_name, batch in messages_by_model.items():
         sentiment_pipeline = pipeline(model=model_name)
         batch_results = sentiment_pipeline([message for _, message in batch])
+
+        # Force garbage collections to remove the model from memory
         del sentiment_pipeline
+        gc.collect()
 
         for (index, _), sentiment_result in zip(batch, batch_results):
-            results[index] = (batch[0][1], sentiment_result['label'])
+            results[index] = sentiment_result
     
+    results = [results[i] for i in range(len(results))]
+
+    # Unify common spellings of the labels
+    for i in range(len(results)):
+        results[i]["label"] = results[i]["label"].lower()
+
     return results
 
 
-messages_with_languages = [
-    (message, language_detector.detect_language_of(message)) for message in messages
-]
-result_dict = process_messages_in_batches(messages_with_languages)
-result = [result_dict[i] for i in range(len(result_dict))]
+def sentiment(messages, models=None):
+    """
+    Estimate the sentiment of a list of messages (strings of text). The
+    sentences may be in different languages from each other.
 
-print(result)
+    We maintain a list of default models for some languages. In addition,
+    the user can provide a model for a given language in the models
+    dictionary. The keys for this dictionary are lingua.Language objects
+    and items HuggingFace model paths.
+    
+    Params:
+    messages: list of message strings
+    models: dict, huggingface model paths indexed by lingua.Language
+    
+    Returns:
+    OrderedDict: containing the index as keys and tuple of (message, sentiment result) as values
+    """
+    messages_with_languages = [
+        (message, language_detector.detect_language_of(message)) for message in messages
+    ]
+
+    results = process_messages_in_batches(messages_with_languages, models)
+    return  results
+
+
+print(sentiment(messages))
+
 
