@@ -1,7 +1,16 @@
-from collections import defaultdict, OrderedDict
+"""
+Sentiment analysis pipeline for texts in multiple languages.
+"""
+
+import gc
+from collections import defaultdict
 
 from transformers import pipeline
 from lingua import Language, LanguageDetectorBuilder
+
+
+__version__ = "0.0.1"
+
 
 default_models = {
     Language.ENGLISH: "lxyuan/distilbert-base-multilingual-cased-sentiments-student",
