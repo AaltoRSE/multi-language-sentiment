@@ -57,8 +57,9 @@ def process_messages_in_batches(messages_with_languages, models = None):
 
     results = {}
 
-    # Group messages by model, preserving original order
-    # if language is no detected, add None to results
+    # Group messages by model, preserving original order.
+    # If language is no detected or a model for that language is not
+    # provided, add None to results
     messages_by_model = defaultdict(list)
     for index, (message, language) in enumerate(messages_with_languages):
         model_name = models.get(language)
