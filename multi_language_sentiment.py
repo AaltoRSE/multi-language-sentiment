@@ -32,17 +32,6 @@ default_models = {
 language_detector = LanguageDetectorBuilder.from_all_languages().with_low_accuracy_mode().build()
 sentiment_pipeline = pipeline(model="fergusq/finbert-finnsentiment")
 
-messages = [
-    "I'm happy to write in English. This should not be hard to detect.",
-    "I'm sad to write in English. This is long enough to be detected.",
-    "Does this get detected?",
-    "Olen iloinen",
-    "Harmillinen juttu",
-    "Detta är inte bra",
-    "Jag skall gå till supermarket",
-    ""
-]
-
 
 # Processing a batch:
 # Detect languages into a list and map to models
@@ -122,8 +111,4 @@ def sentiment(messages, models=None):
 
     results = process_messages_in_batches(messages_with_languages, models)
     return  results
-
-
-print(sentiment(messages))
-
 
