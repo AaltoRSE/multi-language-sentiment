@@ -38,7 +38,16 @@ sentiment_pipeline = pipeline(model="fergusq/finbert-finnsentiment")
 # For each model, make a pipeline, make a list and process
 # inject int a list in the original order
 
-def process_messages_in_batches(messages_with_languages, models = None):
+def split_message(message, max_length):
+    """ Split a message into a list of chunks of given maximum size. """
+    return [message[i: i+max_length] for i in range(0, len(message), max_length)]
+
+
+def process_messages_in_batches(
+        messages_with_languages,
+        models = None,
+        max_length = 512
+    ):
     """
     Process messages in batches, creating only one pipeline at a time, and maintain the original order.
     
@@ -67,21 +76,41 @@ def process_messages_in_batches(messages_with_languages, models = None):
             messages_by_model[model_name].append((index, message))
         else:
             results[index] = {"label": "none", "score": 0}
-            
+    
     # Process messages and maintain original order
     for model_name, batch in messages_by_model.items():
         sentiment_pipeline = pipeline(model=model_name)
-        batch_results = sentiment_pipeline([message for _, message in batch])
+
+        chunks = []
+        message_map = {}
+        for idx, message in batch:
+            message_chunks = split_message(message, max_length)
+            for chunk in message_chunks:
+                chunks.append(chunk)
+                if idx in message_map:
+                    message_map[idx].append(len(chunks) - 1)
+                else:
+                    message_map[idx] = [len(chunks) - 1]
+        
+        chunk_sentiments = sentiment_pipeline(chunks)
+
+        for idx, chunk_indices in message_map.items():
+            sum_scores = {"neutral": 0}
+            for chunk_idx in chunk_indices:
+                label = chunk_sentiments[chunk_idx]["label"]
+                score = chunk_sentiments[chunk_idx]["score"]
+                if label in sum_scores:
+                    sum_scores[label] += score
+                else:
+                    sum_scores[label] = score
+            best_sentiment = max(sum_scores, key=sum_scores.get)
+            score = sum_scores[best_sentiment] / len(chunk_indices)
+            results[idx] = {"label": best_sentiment, "score": score}
 
         # Force garbage collections to remove the model from memory
         del sentiment_pipeline
         gc.collect()
-
-        for (index, _), sentiment_result in zip(batch, batch_results):
-            results[index] = sentiment_result
     
-    results = [results[i] for i in range(len(results))]
-
     # Unify common spellings of the labels
     for i in range(len(results)):
         results[i]["label"] = results[i]["label"].lower()
