@@ -12,6 +12,11 @@ from lingua import Language, LanguageDetectorBuilder
 
 __version__ = "0.0.2"
 
+if torch.cuda.is_available():
+    device_tag = 0 # first gpu
+else:
+    device_tag = -1 # cpu
+
 
 default_models = {
     Language.ENGLISH: "lxyuan/distilbert-base-multilingual-cased-sentiments-student",
@@ -79,7 +84,7 @@ def process_messages_in_batches(
     
     # Process messages and maintain original order
     for model_name, batch in messages_by_model.items():
-        sentiment_pipeline = pipeline(model=model_name)
+        sentiment_pipeline = pipeline(model=model_name, device=device_tag)
 
         chunks = []
         message_map = {}
