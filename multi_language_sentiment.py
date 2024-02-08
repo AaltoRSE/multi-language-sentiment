@@ -6,6 +6,7 @@ import gc
 from collections import defaultdict
 
 from transformers import pipeline
+import torch
 from lingua import Language, LanguageDetectorBuilder
 
 
@@ -30,7 +31,6 @@ default_models = {
 }
 
 language_detector = LanguageDetectorBuilder.from_all_languages().with_low_accuracy_mode().build()
-sentiment_pipeline = pipeline(model="fergusq/finbert-finnsentiment")
 
 
 # Processing a batch:
@@ -114,6 +114,8 @@ def process_messages_in_batches(
     # Unify common spellings of the labels
     for i in range(len(results)):
         results[i]["label"] = results[i]["label"].lower()
+
+    results = [results[i] for i in range(len(results))]
 
     return results
 
