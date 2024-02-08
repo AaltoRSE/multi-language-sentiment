@@ -10,7 +10,7 @@ import torch
 from lingua import Language, LanguageDetectorBuilder
 
 
-__version__ = "0.0.2"
+__version__ = "0.1.0"
 
 if torch.cuda.is_available():
     device_tag = 0 # first gpu
