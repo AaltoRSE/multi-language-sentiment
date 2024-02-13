@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Rantaharju"
+  given-names: "Jarno"
+  orcid: "https://orcid.org/0000-0002-0072-7707"
+title: "multi-language-sentiment"
+version: 0.1.0
+doi: 10.5281/zenodo.10639831
+date-released: 2024-02-09
+url: "https://github.com/AaltoRSE/multi-language-sentiment"
